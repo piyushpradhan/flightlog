@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 
 
 def db_path() -> Path:
-    override = os.environ.get("BLACKBOX_DB")
+    override = os.environ.get("FLIGHTLOG_DB")
     if override:
         return Path(override)
     try:
@@ -47,7 +47,7 @@ def db_path() -> Path:
         home = Path(get_hermes_home())
     except Exception:
         home = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
-    return home / "blackbox" / "blackbox.db"
+    return home / "flightlog" / "flightlog.db"
 
 
 def connect(path: Optional[Path] = None) -> sqlite3.Connection:
@@ -106,7 +106,7 @@ def _ensure_writer() -> None:
         return
     with _start_lock:
         if _thread is None:
-            _thread = threading.Thread(target=_writer_loop, name="blackbox-writer", daemon=True)
+            _thread = threading.Thread(target=_writer_loop, name="flightlog-writer", daemon=True)
             _thread.start()
             atexit.register(flush)
 
@@ -124,7 +124,7 @@ def _writer_loop() -> None:
         conn = connect()
     except Exception as exc:
         paused = True
-        logger.warning("blackbox: database unavailable, recording paused (%s)", exc)
+        logger.warning("flightlog: database unavailable, recording paused (%s)", exc)
         return
     last_prune = 0.0
     while True:
@@ -142,7 +142,7 @@ def _writer_loop() -> None:
                 prune(conn)
                 last_prune = time.time()
         except Exception as exc:
-            logger.warning("blackbox: write failed, %d ops lost (%s)", len(batch), exc)
+            logger.warning("flightlog: write failed, %d ops lost (%s)", len(batch), exc)
         finally:
             for _ in batch:
                 _q.task_done()

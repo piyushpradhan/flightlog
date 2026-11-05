@@ -1,4 +1,4 @@
-"""Read-only API for the dashboard tab and the desktop page, mounted at /api/plugins/blackbox/."""
+"""Read-only API for the dashboard tab and the desktop page, mounted at /api/plugins/flightlog/."""
 
 import importlib.util
 import json
@@ -10,7 +10,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load(name):
-    spec = importlib.util.spec_from_file_location(f"blackbox_{name}", _ROOT / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(f"flightlog_{name}", _ROOT / f"{name}.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

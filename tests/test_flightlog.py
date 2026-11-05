@@ -1,4 +1,4 @@
-"""Run: python3 tests/test_blackbox.py  (no Hermes install, no pytest needed)."""
+"""Run: python3 tests/test_flightlog.py  (no Hermes install, no pytest needed)."""
 
 import importlib.util
 import json
@@ -10,10 +10,10 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-os.environ["BLACKBOX_DB"] = str(Path(tempfile.mkdtemp()) / "bb.db")
-spec = importlib.util.spec_from_file_location("blackbox", ROOT / "__init__.py", submodule_search_locations=[str(ROOT)])
+os.environ["FLIGHTLOG_DB"] = str(Path(tempfile.mkdtemp()) / "bb.db")
+spec = importlib.util.spec_from_file_location("flightlog", ROOT / "__init__.py", submodule_search_locations=[str(ROOT)])
 bb = importlib.util.module_from_spec(spec)
-sys.modules["blackbox"] = bb
+sys.modules["flightlog"] = bb
 spec.loader.exec_module(bb)
 rules, store = bb.rules, bb.store
 
@@ -134,7 +134,7 @@ def test_green_but_wrong_cron_run_is_flagged_end_to_end():
     assert len(store.events(conn, r["run_id"])) == 4  # session start, 2 tools, 1 model call
     why = bb.slash(f"why {r['run_id']}")
     assert why.startswith("⚠ Said done, but a step failed") and "✗ web_search news 0 · 40 ms — 429 rate limited" in why
-    assert bb.slash("").startswith("Blackbox · last 24h")
+    assert bb.slash("").startswith("Flightlog · last 24h")
     b = rules.baseline_from(store.healthy_runs(conn, "abc123def456"))
     assert b["n"] == 7 and b["median_tools"] == 11  # the bad run is not in the baseline
 
@@ -148,7 +148,7 @@ def test_cron_failure_marker_is_respected():
 
 def test_silent_job_breaks_silence_when_flagged():
     _, out = cron_run("eee000eee000", 1, 2, result=ERR, answer="[SILENT]")
-    assert out.startswith("**⚠ Blackbox") and "[SILENT]" not in out
+    assert out.startswith("**⚠ Flightlog") and "[SILENT]" not in out
 
 
 def test_ack_silences_rule_for_job():

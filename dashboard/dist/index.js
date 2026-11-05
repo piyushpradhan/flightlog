@@ -6,7 +6,7 @@
   const { useState, useEffect } = SDK.hooks;
   const { Card, CardHeader, CardTitle, CardContent, Badge } = SDK.components;
   const h = React.createElement;
-  const API = "/api/plugins/blackbox";
+  const API = "/api/plugins/flightlog";
   const BAD = { error: 1, failed: 1, denied: 1, timeout: 1 };
 
   const LABELS = {
@@ -79,11 +79,11 @@
             h("span", { className: "bb-preview", title: e.preview || "" }, e.preview || ""))))));
   }
 
-  function BlackboxPage() {
+  function FlightlogPage() {
     const [data, err] = useJSON(API + "/runs?limit=200", []);
     const [selected, setSelected] = useState(null);
     const [job, setJob] = useState("");
-    if (err) return h("p", { className: "p-4" }, "Blackbox API unavailable: " + err);
+    if (err) return h("p", { className: "p-4" }, "Flightlog API unavailable: " + err);
     if (!data) return h("p", { className: "p-4" }, "Loading…");
     const runs = data.runs;
     const current = selected || (runs.find((r) => r.findings) || runs[0] || {}).run_id;
@@ -98,10 +98,10 @@
     const color = d.flagged || d.failed ? "amber" : "green";
     return h(Card, null, h(CardContent, { className: "py-2 text-sm bb-fleet" },
       h("span", { className: "bb-dot bb-" + color }),
-      "Blackbox, last 24h: " + d.runs + " runs, " + d.flagged + " need a look. " +
-      "Timelines in the Blackbox tab."));
+      "Flightlog, last 24h: " + d.runs + " runs, " + d.flagged + " need a look. " +
+      "Timelines in the Flightlog tab."));
   }
 
-  window.__HERMES_PLUGINS__.register("blackbox", BlackboxPage);
-  window.__HERMES_PLUGINS__.registerSlot("blackbox", "cron:top", FleetCard);
+  window.__HERMES_PLUGINS__.register("flightlog", FlightlogPage);
+  window.__HERMES_PLUGINS__.registerSlot("flightlog", "cron:top", FleetCard);
 })();

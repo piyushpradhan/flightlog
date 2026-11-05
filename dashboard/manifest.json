@@ -1,10 +1,10 @@
 {
-  "name": "blackbox",
-  "label": "Blackbox",
+  "name": "flightlog",
+  "label": "Flightlog",
   "description": "Flight recorder: every run, timed, with findings for runs that finished green but behaved wrong.",
   "icon": "Activity",
   "version": "0.1.0",
-  "tab": { "path": "/blackbox", "position": "after:cron" },
+  "tab": { "path": "/flightlog", "position": "after:cron" },
   "slots": ["cron:top"],
   "entry": "dist/index.js",
   "css": "dist/style.css",

@@ -1,4 +1,4 @@
-// Blackbox desktop page: which runs need a look, and what happened in each, at a glance.
+// Flightlog desktop page: which runs need a look, and what happened in each, at a glance.
 // Data comes from dashboard/plugin_api.py through ctx.rest. Styles use theme tokens only.
 import {
   host, useQuery, useValue, atom, StatusDot, EmptyState, ErrorState, CopyButton, Codicon, relativeTime,
@@ -6,7 +6,7 @@ import {
 } from '@hermes/plugin-sdk'
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime'
 
-const ROUTE = '/blackbox'
+const ROUTE = '/flightlog'
 const BAD = { error: 1, failed: 1, denied: 1, timeout: 1 }
 const $selected = atom(null)
 let rest = null // ctx.rest, bound in register()
@@ -139,13 +139,13 @@ function Timeline({ run, events, evidence }) {
 }
 
 function RunDetail({ runId }) {
-  const q = useQuery({ queryKey: ['blackbox', 'run', runId], queryFn: () => rest(`/runs/${runId}`), refetchInterval: 15000 })
+  const q = useQuery({ queryKey: ['flightlog', 'run', runId], queryFn: () => rest(`/runs/${runId}`), refetchInterval: 15000 })
   if (q.error) return jsx(ErrorState, { title: 'Could not load this run', description: String(q.error) })
   if (!q.data) return null
   const { run, events, findings } = q.data
   const evidence = new Set(findings.flatMap(f => f.evidence))
   const models = events.filter(e => e.kind === 'model').length
-  const ack = findings[0] && `hermes blackbox ack ${findings[0].finding_id}`
+  const ack = findings[0] && `hermes flightlog ack ${findings[0].finding_id}`
   return jsxs('div', {
     style: { display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 },
     children: [
@@ -178,13 +178,13 @@ function RunDetail({ runId }) {
 
 // ---------------------------------------------------------------- page
 
-function BlackboxPage() {
-  const q = useQuery({ queryKey: ['blackbox', 'runs'], queryFn: () => rest('/runs?limit=100'), refetchInterval: 5000 })
+function FlightlogPage() {
+  const q = useQuery({ queryKey: ['flightlog', 'runs'], queryFn: () => rest('/runs?limit=100'), refetchInterval: 5000 })
   const selected = useValue($selected)
   if (q.error) {
     return jsx(ErrorState, {
-      title: 'Blackbox backend unavailable',
-      description: 'Enable the blackbox agent plugin (hermes plugins enable blackbox), then restart Hermes.'
+      title: 'Flightlog backend unavailable',
+      description: 'Enable the flightlog agent plugin (hermes plugins enable flightlog), then restart Hermes.'
     })
   }
   if (!q.data) return null
@@ -199,7 +199,7 @@ function BlackboxPage() {
       jsxs('header', {
         style: { padding: '18px 24px 14px', borderBottom: `1px solid ${c.line}` },
         children: [
-          jsx('div', { style: { fontSize: 18, fontWeight: 600 }, children: 'Blackbox' }),
+          jsx('div', { style: { fontSize: 18, fontWeight: 600 }, children: 'Flightlog' }),
           jsx('div', {
             style: { fontSize: 13, color: summary.flagged ? c.yellow : c.dim, marginTop: 2 },
             children: `Last 24 hours: ${plural(summary.runs, 'run')}, ` +
@@ -223,17 +223,17 @@ function BlackboxPage() {
 }
 
 export default {
-  id: 'blackbox',
-  name: 'Blackbox',
+  id: 'flightlog',
+  name: 'Flightlog',
   register(ctx) {
     rest = ctx.rest
     ctx.registerMany([
-      { id: 'page', area: ROUTES_AREA, data: { path: ROUTE }, render: () => jsx(BlackboxPage, {}) },
-      { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: ROUTE, label: 'Blackbox', codicon: 'pulse' } },
+      { id: 'page', area: ROUTES_AREA, data: { path: ROUTE }, render: () => jsx(FlightlogPage, {}) },
+      { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: ROUTE, label: 'Flightlog', codicon: 'pulse' } },
       {
         id: 'open',
         area: PALETTE_AREA,
-        data: { id: 'blackbox.open', label: 'Blackbox: show runs', keywords: ['blackbox', 'runs', 'flight', 'recorder'], run: () => host.navigate(ROUTE) }
+        data: { id: 'flightlog.open', label: 'Flightlog: show runs', keywords: ['flightlog', 'runs', 'flight', 'recorder'], run: () => host.navigate(ROUTE) }
       }
     ])
   }

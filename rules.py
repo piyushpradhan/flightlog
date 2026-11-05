@@ -189,7 +189,7 @@ def template_report(findings: List[Dict[str, Any]]) -> str:
 def footer(findings: List[Dict[str, Any]], run_ref: str) -> str:
     """Markdown appended to the agent's answer. First line of the answer is never touched."""
     lead = findings[0]
-    lines = ["", "---", f"**⚠ Blackbox: {HEADLINES[lead['rule']].lower()}.** {lead['summary']} {IMPACT[lead['rule']]}"]
+    lines = ["", "---", f"**⚠ Flightlog: {HEADLINES[lead['rule']].lower()}.** {lead['summary']} {IMPACT[lead['rule']]}"]
     lines += [f"- **{HEADLINES[f['rule']]}.** {f['summary']}" for f in findings[1:]]
-    lines += ["", f"Details: `/blackbox why {run_ref}`"]
+    lines += ["", f"Details: `/flightlog why {run_ref}`"]
     return "\n".join(lines)

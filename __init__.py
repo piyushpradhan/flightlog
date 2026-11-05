@@ -1,8 +1,8 @@
-"""Blackbox — flight recorder for Hermes Agent.
+"""Flightlog — flight recorder for Hermes Agent.
 
 Hooks record every tool call, model call, subagent and approval into local SQLite (via a background
 writer), judge each finished run against its cron job's baseline, and explain what went wrong.
-Every callback is fail-open: an exception in Blackbox never reaches the agent.
+Every callback is fail-open: an exception in Flightlog never reaches the agent.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ def _safe(fn):
         try:
             return fn(*args, **kwargs)
         except Exception:
-            logger.debug("blackbox: %s failed", fn.__name__, exc_info=True)
+            logger.debug("flightlog: %s failed", fn.__name__, exc_info=True)
             return None
     return wrapper
 
@@ -255,7 +255,7 @@ def transform_llm_output(response_text: str = "", session_id: str = "", platform
         return None
     first_line = response_text.strip().splitlines()[0].strip().upper() if response_text.strip() else ""
     if first_line in ("[SILENT]", "SILENT", "NO_REPLY", "NO REPLY"):
-        # A silent job that swallowed errors is exactly what Blackbox exists to surface.
+        # A silent job that swallowed errors is exactly what Flightlog exists to surface.
         return note.lstrip("\n-") if _cfg["break_silence"] else None
     return response_text + "\n" + note  # first line untouched, so [CRON_FAILURE] keeps working
 
@@ -284,7 +284,7 @@ def on_session_end(session_id: str = "", completed: bool = True, interrupted: bo
         store.put("finding", {**f, "finding_id": uuid.uuid4().hex[:8], "run_id": run.run_id, "job_id": run.job_id,
                               "report": template})
     if found:
-        threading.Thread(target=_explain, args=(run, found), name="blackbox-report", daemon=True).start()
+        threading.Thread(target=_explain, args=(run, found), name="flightlog-report", daemon=True).start()
 
 
 def _explain(run: Run, found: List[Dict[str, Any]]) -> None:
@@ -299,12 +299,12 @@ def _explain(run: Run, found: List[Dict[str, Any]]) -> None:
                   + "\n\nWrite two short sentences for the person who relies on this agent, not an engineer: "
                     "can they trust the answer, and what exactly should they check or fix. No preamble, no lists.")
         result = _ctx.llm.complete([{"role": "user", "content": prompt}], max_tokens=250, timeout=60,
-                                   purpose="blackbox incident report")
+                                   purpose="flightlog incident report")
         text = (getattr(result, "text", "") or "").strip()
         if text:
             store.put("report", {"run_id": run.run_id, "report": text})
     except Exception:
-        logger.debug("blackbox: explanation failed, template kept", exc_info=True)
+        logger.debug("flightlog: explanation failed, template kept", exc_info=True)
 
 
 # ---------------------------------------------------------------- tripwire (opt-in)
@@ -319,14 +319,14 @@ def pre_tool_call(tool_name: str = "", args: Any = None, **kw: Any):
     limit = int(_cfg["rules"].get("loop_repeats", rules.DEFAULTS["loop_repeats"]))
     if n < limit:
         return None
-    return {"action": "approve", "rule_key": f"blackbox:loop:{tool_name}",
-            "message": f"Blackbox: {tool_name} has been called {n} times with the same arguments this turn. "
+    return {"action": "approve", "rule_key": f"flightlog:loop:{tool_name}",
+            "message": f"Flightlog: {tool_name} has been called {n} times with the same arguments this turn. "
                        f"Let it continue?"}
 
 
 # ---------------------------------------------------------------- views
 # Slash output lands in the desktop as a plain-text, proportional-font system line, so: verdict first,
-# one idea per line, no column alignment. The rich view is the desktop Blackbox page.
+# one idea per line, no column alignment. The rich view is the desktop Flightlog page.
 
 RED, RESET = "\033[31m", "\033[0m"
 BAD = ("error", "failed", "denied", "timeout")
@@ -423,23 +423,23 @@ def report(conn, run: Dict[str, Any], color: bool = False) -> str:
         line = "  " + (f"+{e['ts'] - run['started']:.1f}s  " if color and e else "") + text
         lines.append(f"{RED}{line}{RESET}" if color and e and e["status"] in BAD else line)
     if found:
-        lines += ["", f"False alarm? hermes blackbox ack {found[0]['finding_id']}"]
+        lines += ["", f"False alarm? hermes flightlog ack {found[0]['finding_id']}"]
     return "\n".join(lines)
 
 
 def overview(conn, limit: int = 5) -> str:
     recent = store.recent_runs(conn, limit)
     if not recent:
-        return ("Blackbox has no runs yet. A run is recorded when an agent turn ends.\n"
+        return ("Flightlog has no runs yet. A run is recorded when an agent turn ends.\n"
                 "Just enabled it? Restart Hermes fully (desktop: Cmd+Q) so the agent backend loads the plugin.")
     s = store.recent_summary(conn)
-    head = f"Blackbox · last 24h: {s['runs']} run{'s' if s['runs'] != 1 else ''}, "
+    head = f"Flightlog · last 24h: {s['runs']} run{'s' if s['runs'] != 1 else ''}, "
     head += f"{s['flagged']} need{'s' if s['flagged'] == 1 else ''} a look" if s["flagged"] else "all look fine"
     lines = [head, ""]
     for r in recent:
         lines += [_verdict(r.get("top_rule"), r["outcome"]), f"   {_who(r)} · {_ago(r['ended'])} · run {r['run_id']}"]
     flagged = next((r for r in recent if r.get("top_rule")), None)
-    lines += ["", f"Open one: /blackbox why {(flagged or recent[0])['run_id']}"]
+    lines += ["", f"Open one: /flightlog why {(flagged or recent[0])['run_id']}"]
     if store.dropped:
         lines.append(f"{store.dropped} events were dropped (queue full).")
     return "\n".join(lines)
@@ -452,15 +452,15 @@ def slash(raw_args: str = "") -> str:
         if argv[:1] != ["why"]:
             return overview(conn)
         if len(argv) < 2:
-            return "Which run? /blackbox why <run id>. Run /blackbox to list recent runs."
+            return "Which run? /flightlog why <run id>. Run /flightlog to list recent runs."
         runs = store.find_runs(conn, argv[1])
-        return report(conn, runs[-1]) if runs else f"No run {argv[1]}. Run /blackbox to list recent runs."
+        return report(conn, runs[-1]) if runs else f"No run {argv[1]}. Run /flightlog to list recent runs."
     finally:
         conn.close()
 
 
 def _cli_setup(parser) -> None:
-    sub = parser.add_subparsers(dest="blackbox_action")
+    sub = parser.add_subparsers(dest="flightlog_action")
     sub.add_parser("runs", help="Recent runs with health marks").add_argument("--job")
     sub.add_parser("show", help="Timeline for a run or session").add_argument("ref")
     sub.add_parser("jobs", help="Each cron job's baseline")
@@ -469,7 +469,7 @@ def _cli_setup(parser) -> None:
 
 
 def _cli(args) -> None:
-    action = getattr(args, "blackbox_action", None) or "runs"
+    action = getattr(args, "flightlog_action", None) or "runs"
     conn = store.connect()
     try:
         if action == "runs":
@@ -489,7 +489,7 @@ def _cli(args) -> None:
             f = store.ack(conn, args.finding)
             print(f"Acked {f['finding_id']} ({f['rule']}); silenced for this job." if f else "No such finding.")
         elif action == "purge":
-            if not args.yes and input("Delete all Blackbox data? [y/N] ").strip().lower() != "y":
+            if not args.yes and input("Delete all Flightlog data? [y/N] ").strip().lower() != "y":
                 return
             store.purge(conn)
             print("Purged.")
@@ -516,6 +516,6 @@ def register(ctx) -> None:
         ctx.register_hook(fn.__name__, fn)
     if _cfg["tripwire"]:  # only registered when on: pre_tool_call fails closed on timeout
         ctx.register_hook("pre_tool_call", pre_tool_call)
-    ctx.register_command("blackbox", handler=slash, description="Flight recorder: recent runs and findings",
+    ctx.register_command("flightlog", handler=slash, description="Flight recorder: recent runs and findings",
                          args_hint="[why <run>]")
-    ctx.register_cli_command("blackbox", help="Blackbox flight recorder", setup_fn=_cli_setup, handler_fn=_cli)
+    ctx.register_cli_command("flightlog", help="Flightlog flight recorder", setup_fn=_cli_setup, handler_fn=_cli)
