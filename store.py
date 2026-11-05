@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import json
+import re
 import logging
 import os
 import queue
@@ -147,6 +148,11 @@ def _writer_loop() -> None:
                 _q.task_done()
 
 
+# ponytail: fallback only if Hermes's private redactor moves; catches common key shapes, not everything.
+_SECRETS = re.compile(r"((?i:bearer)\s+[\w.~+/-]{8,}|sk-[\w-]{16,}|gh[pousr]_\w{20,}|xox[abp]-[\w-]{10,}|AKIA[0-9A-Z]{16}|eyJ[\w-]{10,}\.[\w-]+\.[\w-]+|"
+                      r"(?i:(?:api[_-]?key|token|secret|password|authorization)[\"']?\s*[:=]\s*[\"']?(?:bearer\s+)?)[^\s\"',]{6,})")
+
+
 def _redact(text: Optional[str]) -> Optional[str]:
     if not text:
         return text
@@ -154,7 +160,7 @@ def _redact(text: Optional[str]) -> Optional[str]:
         from agent.redact import redact_sensitive_text
         return redact_sensitive_text(text, force=True)[:200]
     except Exception:
-        return text[:200]
+        return _SECRETS.sub("[REDACTED]", text)[:200]
 
 
 def _event_cost(data: Dict[str, Any]) -> Optional[float]:
