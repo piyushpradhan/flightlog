@@ -47,6 +47,16 @@ Details: `/flightlog why 3f9a01c2`
 
 The first line of the answer is never touched, so `[CRON_FAILURE]` keeps working. A `[SILENT]` job that gets flagged posts the note instead of staying silent; set `break_silence: false` to keep it quiet.
 
+## Desktop screenshots
+
+A live repair run where two review helpers failed, followed by a run that disclosed the failures:
+
+![Flagged run and incident report](docs/screenshots/flagged-run.png)
+
+![Failed helpers in the timeline](docs/screenshots/failed-helpers.png)
+
+![Follow-up with no findings](docs/screenshots/healthy-run.png)
+
 ## Rules
 
 Each finished cron run is compared with its job's last 7 healthy runs.
