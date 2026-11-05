@@ -1,0 +1,21 @@
+.bb-page { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 800px) { .bb-page { grid-template-columns: 1fr; } }
+.bb-select { width: 100%; margin-bottom: .5rem; padding: .35rem .5rem; border-radius: 6px; background: transparent; border: 1px solid hsl(var(--border, 0 0% 50%) / .5); font-size: .85rem; }
+.bb-runs { list-style: none; margin: 0; padding: 0; max-height: 70vh; overflow-y: auto; }
+.bb-run { display: grid; grid-template-columns: 10px 1fr auto; gap: .5rem; align-items: center; width: 100%; text-align: left; padding: .4rem .5rem; border-radius: 6px; font-size: .85rem; }
+.bb-run:hover, .bb-sel { background: hsl(var(--muted, 0 0% 50%) / .25); }
+.bb-run:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+.bb-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bb-meta { opacity: .6; font-size: .75rem; white-space: nowrap; }
+.bb-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem; flex: none; }
+.bb-green { background: #22a06b; } .bb-amber { background: #e2a03f; } .bb-red { background: #e5484d; }
+.bb-finding { border-left: 3px solid #e2a03f; padding: .4rem .6rem; margin-bottom: .5rem; font-size: .85rem; }
+.bb-report { margin: .35rem 0 0; opacity: .8; }
+.bb-timeline { list-style: none; margin: .5rem 0 0; padding: 0; font-family: ui-monospace, monospace; font-size: .78rem; }
+.bb-ev { display: grid; grid-template-columns: 64px 64px 140px 120px 60px 1fr; gap: .5rem; align-items: center; padding: .15rem 0; border-bottom: 1px solid hsl(var(--border, 0 0% 50%) / .2); }
+.bb-bad { color: #e5484d; }
+.bb-t, .bb-dur { opacity: .6; font-variant-numeric: tabular-nums; text-align: right; }
+.bb-name, .bb-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bb-bar-wrap { height: 6px; background: hsl(var(--muted, 0 0% 50%) / .2); border-radius: 3px; overflow: hidden; }
+.bb-bar { display: block; height: 100%; background: currentColor; opacity: .5; }
+.bb-fleet { display: flex; align-items: center; }

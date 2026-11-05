@@ -1,0 +1,23 @@
+name: blackbox
+version: 0.1.0
+description: "Flight recorder for Hermes. Records every tool call, model call, subagent and approval to local SQLite, flags runs that finish green but behave wrong, and explains why."
+author: Piyush Pradhan
+license: MIT
+requires_hermes: ">=0.21"
+tags: [observability, cron, monitoring, automation]
+provides_hooks:
+  - on_session_start
+  - post_tool_call
+  - post_api_request
+  - api_request_error
+  - subagent_start
+  - subagent_stop
+  - pre_approval_request
+  - post_approval_response
+  - transform_llm_output
+  - on_session_end
+# pre_tool_call is registered only when settings.tripwire is true (see README).
+config_schema:
+  tripwire: {type: boolean, default: false, description: "Ask a human before a looping tool call continues. Unattended runs fail closed on approval timeout."}
+  break_silence: {type: boolean, default: true, description: "Let a [SILENT] cron job post when Blackbox flags it."}
+  rules: {type: object, description: "Threshold overrides: swallowed_errors, loop_repeats, cost_spike_x, effort_collapse_pct, min_baseline_runs."}
